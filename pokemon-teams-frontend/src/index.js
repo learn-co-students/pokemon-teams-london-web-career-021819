@@ -14,6 +14,7 @@ function renderAll(){
   fetchTrainers()
   .then(trainers => trainers.forEach(trainer => addCard(trainer)))
 }
+
 /// CREATE POKEMON
 function createPokemon (trainer) {
 	return fetch(pokemon_url,{
@@ -29,34 +30,44 @@ function createPokemon (trainer) {
 
 /// CREATE CARD
 function addCard (trainer){
+  trainerEl = makeTrainerEl(trainer)
+  makeAddButtonEl(trainer, trainerEl)
+  makeList(trainer, trainerEl)
+}
+
+function makeTrainerEl(trainer) {
   let trainerEl = document.createElement('div')
   trainerEl.dataset.trainerId = trainer.id
   trainerEl.className = 'card'
   trainerEl.innerText = trainer.name + " "
   trainerEl.style = "text-align: center"
-    mainEl.appendChild(trainerEl)
+  mainEl.appendChild(trainerEl)
+  return trainerEl
+}
 
+function makeAddButtonEl(trainer, trainerEl) {
   let addEl = document.createElement('button')
-  addEl.dataset.trainerId = trainer.id
-  addEl.className = '.add-Pokemon'
-  addEl.innerText = "Add Pokemon"
-  addEl.addEventListener('click', () => {
-    createPokemon(trainer.id) } )
-
+    addEl.dataset.trainerId = trainer.id
+    addEl.className = 'add-Pokemon'
+    addEl.innerText = "Add Pokemon"
+    addEl.addEventListener('click', () => {
+      createPokemon(trainer.id)
+      .then(pokemon => addPokemon(pokemon, trainer))
+    })
     trainerEl.appendChild(addEl)
+}
+
+function makeList(trainer, trainerEl) {
   let ulEl = document.createElement('ul')
+    ulEl.className = "ul"
+    ulEl.id = `ul-${trainer.name}`
     trainerEl.appendChild(ulEl)
 
   let listEl = document.createElement('li')
-  listEl.innerHTML = addPokemon(trainer.pokemons)
+  listEl.className = "li"
+  listEl.id = `li-${trainer.name}`
+  listEl.innerHTML = addPokemons(trainer.pokemons)
     ulEl.appendChild(listEl)
-
-/// PURE JS RELEASE BUTTON
-  // let releaseEl = document.createElement('button')
-  // releaseEl.dataset.trainerId = addPokemon(trainer.pokemons).id
-  // releaseEl.className = "release"
-  // releaseEl.innerText = "Release"
-  //   listEl.appendChild(releaseEl)
 }
 
 /// RENDER TRAINERS
@@ -66,7 +77,7 @@ function renderAll(){
 }
 
 /// ADD POKEMON NICKNAME & SPECIES LIST & RELEASE BUTTON
-function addPokemon(pokemons) {
+function addPokemons(pokemons) {
 return pokemons.map(pokemon => `
     <li id="pokemon-${pokemon.id}">
       ${pokemon.nickname} (${pokemon.species})
@@ -75,6 +86,20 @@ return pokemons.map(pokemon => `
   `).join('')
 }
 
+/// ADD INDIVIDUAL POKEMON
+function addPokemon (pokemon, trainer) {
+  const trainerUl = document.querySelector(`#ul-${trainer.name}`)
+  const pokemonEl = document.querySelector(`#li-${trainer.name}`)
+  const newmonEl = document.createElement('li')
+  pokemonEl.id = `pokemon-${pokemon.id}`
+  newmonEl.innerHTML = `
+       ${pokemon.nickname} (${pokemon.species})
+       <button class="release" data-pokemon-id="${pokemon.id}">Release</button>
+    `
+    pokemonEl.appendChild(newmonEl)
+}
+
+/// ACTION RELASE BUTTON
 function addGlobalListenerToRemovePokemon () {
     document.addEventListener('click', event => {
       if (event.target.className !== 'release') return
@@ -94,7 +119,7 @@ function releasePokemon(pokemon_id) {
 	}).then(resp => resp.json())
 }
 
-/// ACTION
+/// INITIALIZE
 document.addEventListener('DOMContentLoaded', function(){
   renderAll()
   addGlobalListenerToRemovePokemon()
